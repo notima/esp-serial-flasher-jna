@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.notima.energyintelligence</groupId>
+    <artifactId>esp-serial-flasher-jna</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+     <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+
+        <!-- Where CMake builds -->
+        <native.build.dir>${project.build.directory}/native</native.build.dir>
+
+        <!-- Path to submodule -->
+        <native.source.dir>${project.basedir}/src/main/native</native.source.dir>
+
+        <!-- Output library name -->
+        <native.lib.name>esp_serial_flasher</native.lib.name>
+    </properties>
+
+    <build>
+        <plugins>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                    <id>set-jna-arch</id>
+                    <phase>initialize</phase>
+                    <goals>
+                        <goal>regex-property</goal>
+                    </goals>
+                    <configuration>
+                        <name>os.classifier</name>
+                        <value>${os.detected.classifier}</value>
+                        <regex>_</regex>
+                        <replacement>-</replacement>
+                    </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!--  Run CMake configure + build -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>
+
+                <executions>
+
+                    <!-- cmake configure -->
+                    <execution>
+                        <id>cmake-configure</id>
+                        <phase>generate-resources</phase>
+                        <goals><goal>exec</goal></goals>
+                        <configuration>
+                            <executable>cmake</executable>
+                            <workingDirectory>${native.build.dir}</workingDirectory>
+                            <arguments>
+                                <argument>${native.source.dir}</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+
+                    <!-- cmake build -->
+                    <execution>
+                        <id>cmake-build</id>
+                        <phase>generate-resources</phase>
+                        <goals><goal>exec</goal></goals>
+                        <configuration>
+                            <executable>cmake</executable>
+                            <workingDirectory>${native.build.dir}</workingDirectory>
+                            <arguments>
+                                <argument>--build</argument>
+                                <argument>.</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+
+                </executions>
+            </plugin>
+
+            <!-- Copy output native libs into main resources -->
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.3.1</version>
+
+                <executions>
+                    <execution>
+                        <id>copy-native library</id>
+                        <phase>generate-resources</phase>
+                        <goals><goal>copy-resources</goal></goals>
+
+                        <configuration>
+                            <outputDirectory>
+                                ${project.basedir}/src/main/resources/${os.classifier}
+                            </outputDirectory>
+
+                            <resources>
+                                <resource>
+                                    <directory>${native.build.dir}</directory>
+                                    <includes>
+                                        <include>*.so</include>
+                                        <include>*.dll</include>
+                                        <include>*.dylib</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Copy output native libs into test resources -->
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.3.1</version>
+
+                <executions>
+                    <execution>
+                        <id>copy-native-test</id>
+                        <phase>generate-test-resources</phase>
+                        <goals><goal>copy-resources</goal></goals>
+
+                        <configuration>
+                            <outputDirectory>
+                                ${project.basedir}/src/test/resources/${os.classifier}
+                            </outputDirectory>
+
+                            <resources>
+                                <resource>
+                                    <directory>${native.build.dir}</directory>
+                                    <includes>
+                                        <include>*.so</include>
+                                        <include>*.dll</include>
+                                        <include>*.dylib</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Copy example binaries to test resources -->
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.3.1</version>
+
+                <executions>
+                    <execution>
+                        <id>copy-example-binaries</id>
+                        <phase>generate-test-resources</phase>
+                        <goals><goal>copy-resources</goal></goals>
+
+                        <configuration>
+                            <outputDirectory>
+                                ${project.basedir}/src/test/resources/bin
+                            </outputDirectory>
+
+                            <resources>
+                                <resource>
+                                    <directory>${native.source.dir}/esp-serial-flasher/examples/binaries/Hello-world/ESP32</directory>
+                                    <includes>
+                                        <include>*.bin</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!--  Detect OS and architecture -->
+            <plugin>
+                <groupId>kr.motd.maven</groupId>
+                <artifactId>os-maven-plugin</artifactId>
+                <version>1.7.1</version>
+                <extensions>true</extensions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.22.2</version>
+            </plugin>
+
+        </plugins>
+    </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>net.java.dev.jna</groupId>
+            <artifactId>jna</artifactId>
+            <version>5.14.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.8.2</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+</project>

@@ -1,0 +1,3 @@
+[submodule "src/main/native/esp-serial-flasher"]
+	path = src/main/native/esp-serial-flasher
+	url = git@github.com:Olverine/esp-serial-flasher.git
