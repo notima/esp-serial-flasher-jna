@@ -2,6 +2,31 @@
 
 This Java library utilizes JNA (Java Native Access) to execute functions in the [esp-serial-flasher](https://github.com/Olverine/esp-serial-flasher) native C library. The specific fork of the library adds desktop OS compatibility.
 
+## Building the project
+
+The native code will be compiled when building the project with maven. The following steps are added to the build lifecycle:
+
+*generate resources:*
+- CMake configure: configures the project from the CMakeLists.txt found in `src/main/native/`
+- CMake build: builds the native library
+- copy native library: copies the native library output to the platform specific directory in `/src/main/resources/`
+*generate-test-resources:*
+- copy-native-test: copies the native library to test resources
+- copy-example-binaries: copies binary files used by the test code
+
+### Building on Windows
+
+A few prerequisites need to be meet in order for the build process to work on Windows:
+
+- Install [MinGW MSYS2](https://www.msys2.org/)
+- Run MSYS2 from the start menu
+- In the MSYS2 shell, run the following commands:
+  - `pacman -Syu`
+  - `pacman -S mingw-w64-ucrt-x86_64-gcc`
+  - `pacman -S mingw-w64-ucrt-x86_64-cmake`
+  - `pacman -S mingw-w64-ucrt-x86_64-ninja`
+- Add the following directory to the PATH: `C:\msys64\ucrt64\bin`
+
 ## Public API
 
 All public methods are located in the class `EspSerialFlasher`.
